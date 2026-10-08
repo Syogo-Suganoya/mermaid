@@ -157,4 +157,41 @@ describe('[Interactions] when parsing', () => {
     expect(flowDb.setLink).toHaveBeenCalledWith('A', 'click.html', '_blank');
     expect(flowDb.setTooltip).toHaveBeenCalledWith('A', 'tooltip');
   });
+
+  describe('a node named click (issue #7023)', () => {
+    it.each([
+      ['---', 'abc'],
+      ['-->', 'abc'],
+      ['==>', 'abc'],
+      ['-.->', 'abc'],
+      ['~~~', 'abc'],
+      ['<-->', 'abc'],
+      ['x--x', 'abc'],
+      ['o--o', 'abc'],
+      ['-- text -->', 'abc'],
+    ])('should parse "click %s %s" as a link from the node click', (link, target) => {
+      spyOn(flowDb, 'setClickEvent');
+      flow.parser.parse(`flowchart LR\n    click ${link} ${target};`);
+
+      const edges = flow.parser.yy.getEdges();
+      expect(edges).toHaveLength(1);
+      expect(edges[0].start).toBe('click');
+      expect(edges[0].end).toBe(target);
+      expect(flowDb.setClickEvent).not.toHaveBeenCalled();
+    });
+
+    it('should parse a node named click chained with &', () => {
+      flow.parser.parse('flowchart LR\n    click & a --> b');
+
+      const edges = flow.parser.yy.getEdges();
+      expect(edges.map(({ start, end }) => `${start}-${end}`)).toEqual(['click-b', 'a-b']);
+    });
+
+    it('should still parse click statements separated by several spaces', () => {
+      spyOn(flowDb, 'setClickEvent');
+      flow.parser.parse('graph TD\nA-->B\nclick    A callback');
+
+      expect(flowDb.setClickEvent).toHaveBeenCalledWith('A', 'callback');
+    });
+  });
 });
