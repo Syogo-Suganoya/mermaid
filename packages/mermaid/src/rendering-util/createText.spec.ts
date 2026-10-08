@@ -99,4 +99,12 @@ describe('createText', () => {
       expect(output.textContent).toEqual(expected);
     }
   );
+
+  it('does not clip HTML labels whose text renders wider than measured (issue #7359)', async () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const svgGroup = svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'g'));
+    const output = await createText(select(svgGroup), '오디오 스트림', { useHtmlLabels: true });
+    expect(output.tagName).toBe('foreignObject');
+    expect((output as unknown as SVGForeignObjectElement).style.overflow).toBe('visible');
+  });
 });
