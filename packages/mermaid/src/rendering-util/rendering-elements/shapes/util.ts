@@ -1,5 +1,6 @@
 import { createText } from '../../createText.js';
 import fastdom from '../../fastdom.js';
+import { getLayoutBox } from '../../getLayoutBox.js';
 import type { Node } from '../../types.js';
 import { getConfig } from '../../../diagram-api/diagramAPI.js';
 import { evaluate, getEffectiveHtmlLabels } from '../../../config.js';
@@ -124,8 +125,8 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
 
     bbox = await fastdom.measure(() =>
       injected.profiling && profiler.tickSync
-        ? profiler.tickSync('getBoundingClientRect', () => div.getBoundingClientRect())
-        : div.getBoundingClientRect()
+        ? profiler.tickSync('getBoundingClientRect', () => getLayoutBox(div))
+        : getLayoutBox(div)
     );
     bbox = withMinWidth(bbox, minLabelWidth);
     dv.attr('width', bbox.width);
@@ -186,13 +187,13 @@ export const insertLabel = async <T extends SVGGraphicsElement>(
   let bbox: DOMRect;
 
   if (getEffectiveHtmlLabels(getConfig())) {
-    const div = text.children[0];
+    const div = text.children[0] as HTMLElement;
     const dv = select(text);
 
     bbox = await fastdom.measure(() =>
       injected.profiling && profiler.tickSync
-        ? profiler.tickSync('getBoundingClientRect', () => div.getBoundingClientRect())
-        : div.getBoundingClientRect()
+        ? profiler.tickSync('getBoundingClientRect', () => getLayoutBox(div))
+        : getLayoutBox(div)
     );
     dv.attr('width', bbox.width);
     dv.attr('height', bbox.height);
