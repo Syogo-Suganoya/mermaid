@@ -14,6 +14,14 @@ import { applyElkLineJumps } from './lineHops.js';
 import { clusterPaintsTitle } from '../../rendering-elements/clusters.js';
 import { markerOffsets, markerOffsets2 } from '../../../utils/lineWithOffset.js';
 import {
+  collectSideNotes,
+  orientSideNoteEdges,
+  placeSideNotes,
+  reserveSideNoteSpace,
+  withoutSideNotes,
+  type SideNote,
+} from './placeSideNotes.js';
+import {
   EDGE_ROUTING_OPTIONS,
   PLACEMENT_OPTIONS,
   ROOT_EXPERIMENT_OVERRIDES,
@@ -123,6 +131,8 @@ interface ElkLayoutState {
   elkGraph: any;
   nodeDb: Record<string, NodeWithVertex>;
   parentLookupDb: TreeData;
+  /** Notes laid out beside their node rather than by ELK; see `placeSideNotes`. */
+  sideNotes: SideNote[];
 }
 
 interface ElkLayoutResult {
@@ -699,14 +709,19 @@ export async function runElkLayoutCore(
 
   const graph = await runElkLayout(elk, layoutState.elkGraph, elkContext.log);
   applyElkLayoutResult(data4Layout, graph, layoutState, elkContext.log);
+  placeSideNotes(layoutState.sideNotes);
   orderNodesForElkPaint(data4Layout.nodes);
   return graph;
 }
 
 export function buildElkGraphFromLayoutData(
-  data4Layout: LayoutData,
+  layoutData: LayoutData,
   elkContext: ElkLayoutContext
 ): ElkLayoutState {
+  // Notes placed `left of` / `right of` a node are positioned next to it after the layout, in
+  // space reserved for them, rather than by ELK.
+  const sideNotes = collectSideNotes(layoutData);
+  const data4Layout = withoutSideNotes(layoutData, sideNotes);
   const nodeDb: Record<string, NodeWithVertex> = {};
   const elkGraph = createRootElkGraph(
     data4Layout,
@@ -726,8 +741,10 @@ export function buildElkGraphFromLayoutData(
     reverseSubgraphFeedbackEdges(elkGraph, parentLookupDb);
   }
   applyCyclicEntryConstraint(data4Layout, nodeDb);
+  reserveSideNoteSpace(nodeDb, sideNotes);
+  orientSideNoteEdges(data4Layout, elkGraph.edges);
 
-  return { elkGraph, nodeDb, parentLookupDb };
+  return { elkGraph, nodeDb, parentLookupDb, sideNotes };
 }
 
 /**
