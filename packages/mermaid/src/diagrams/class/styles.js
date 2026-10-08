@@ -219,6 +219,17 @@ g.classGroup line {
   font-size: 11px;
   line-height: initial;
 }
+${
+  options.classCardinalityText
+    ? `
+.edgeTerminals, .edgeTerminals span, .edgeTerminals p {
+  color: ${options.classCardinalityText} !important;
+}
+.edgeTerminals text, .edgeTerminals tspan {
+  fill: ${options.classCardinalityText} !important;
+}`
+    : ''
+}
 
 .classTitleText {
   text-anchor: middle;

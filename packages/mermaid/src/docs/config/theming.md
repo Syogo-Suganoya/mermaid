@@ -274,9 +274,10 @@ The theming engine will only recognize hex colors and not color names. So, the v
 
 ## Class Colors
 
-| Variable  | Default value | Description                     |
-| --------- | ------------- | ------------------------------- |
-| classText | textColor     | Color of Text in class diagrams |
+| Variable             | Default value    | Description                                                                                                 |
+| -------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| classText            | textColor        | Color of Text in class diagrams                                                                             |
+| classCardinalityText | edge label color | Color of the cardinality (multiplicity) labels on relations in class diagrams (v<MERMAID_RELEASE_VERSION>+) |
 
 ## User Journey Colors
 
