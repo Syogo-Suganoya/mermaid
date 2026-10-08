@@ -109,6 +109,11 @@ const getStyles = (options) =>
     stroke-width: ${options.strokeWidth};
   }
 
+g.node.classDiagram-note path {
+  fill: ${options.noteBkgColor};
+  stroke: ${options.noteBorderColor};
+}
+
 
 .divider {
   stroke: ${options.nodeBorder};

@@ -795,12 +795,10 @@ export class ClassDB implements DiagramDB {
         isGroup: false,
         shape: 'note',
         padding: config.class!.padding ?? 6,
-        cssStyles: [
-          'text-align: left',
-          'white-space: nowrap',
-          `fill: ${config.themeVariables.noteBkgColor}`,
-          `stroke: ${config.themeVariables.noteBorderColor}`,
-        ],
+        // The note colours come from the `classDiagram-note` rule in the diagram's stylesheet
+        // rather than inline styles, so they can be overridden with CSS.
+        cssClasses: 'classDiagram-note',
+        cssStyles: ['text-align: left', 'white-space: nowrap'],
         look: config.look,
         parentId: noteParentId,
         labelType: 'markdown',
