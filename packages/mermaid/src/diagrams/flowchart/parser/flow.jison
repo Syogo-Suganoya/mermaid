@@ -109,7 +109,12 @@ line was introduced with 'click'.
 that id.
 'click <id>' can be followed by href or call commands in any desired order
 */
-"click"[\s]+             this.begin("click");
+/*
+A node can be named 'click': when 'click' is followed by a link or '&' it is that node, not
+the start of a click statement. The lookahead also rejects whitespace so that the whole run of
+spaces is consumed before checking what follows.
+*/
+"click"[\s]+(?![\s&]|[xo<]?[-=.~])  this.begin("click");
 <click>[\s\n]            this.popState();
 <click>[^\s\n]*          return 'CLICK';
 
