@@ -415,6 +415,8 @@ export const dataFetcher = (
         padding: 16, //getConfig().flowchart.padding
         look,
         position: parsedItem.note.position,
+        // The note belongs in the same container as the state it annotates.
+        parentId: nodeData.parentId,
       };
       graphItemCount++;
 
