@@ -290,7 +290,8 @@ export const verifyScreenshot = async (
       return;
     }
 
-    await expect(target).toHaveScreenshot(snapshotName);
+    // Compare at the same scale the baseline above was written with.
+    await expect(target).toHaveScreenshot(snapshotName, { scale: 'device' });
   }
 };
 
