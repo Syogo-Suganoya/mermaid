@@ -207,9 +207,9 @@ ol.chain li { background: var(--surface2); border: 1px solid var(--line); border
 ol.chain li:not(:last-child)::after { content: "↓"; position: absolute; right: 10px; bottom: -14px; font-size: 12px; color: var(--muted); }
 ol.chain li span { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .card ol.chain li::before { display: none; }
-.lanes { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; overflow-x: auto; }
-.lgrid { display: grid; grid-template-columns: repeat(var(--n), minmax(180px, 1fr)); gap: 0 12px; min-width: calc(var(--n) * 192px); position: relative; }
-.lh { grid-row: 1; font-family: var(--f-code); font-size: 12.5px; font-weight: 600; text-align: center; color: var(--ink-soft); background: var(--slate-wash); border-radius: 8px; padding: 4px; margin-bottom: 10px; }
+.lanes { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; }
+.lgrid { display: grid; grid-template-columns: repeat(var(--n), minmax(150px, 1fr)); gap: 0 12px; position: relative; }
+.lh { grid-row: 1; position: sticky; top: 62px; z-index: 3; font-family: var(--f-code); font-size: 13px; font-weight: 600; text-align: center; color: var(--ink); background: var(--slate-wash); border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(20,36,51,.08); }
 .lbg { display: none; }
 .lstep { background: var(--surface2); border: 1.5px solid var(--sea); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; position: relative; }
 .lstep b { color: var(--ink); font-size: 14.5px; font-family: var(--f-code); overflow-wrap: anywhere; }
@@ -251,7 +251,7 @@ ol.rcp { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14px
 <p class="kicker">MERMAID · CODE MAP</p>
 <h1>Mermaid <em>コード逆引き</em></h1>
 <p class="lead">構成図と処理の流れで全体をつかんでから、「この図・この機能のコードはどこにあるか」を引けるようにしたリファレンスです。パスはクリックでコピーできます。</p>
-<p class="basis"><span>mermaid v12.1.0</span><span>develop ブランチ（6d1e9170f、2026年10月13日）のコードをもとに作成</span><span>図 37 種類・テーマ 11 種類・形 53 種類</span></p>
+<p class="basis"><span>mermaid v12.1.0</span><span>develop ブランチ（6fc21a2c4、2026年10月13日）のコードをもとに作成</span><span>図 37 種類・テーマ 11 種類・形 53 種類</span></p>
 <p class="disclaimer">非公式の解説資料です。Mermaid の公式資料ではありません。</p>
 <nav class="toc" aria-label="目次"><ol><li><a href="#system"><span class="no">01</span>システム構成</a></li><li><a href="#folders"><span class="no">02</span>フォルダの地図</a></li><li><a href="#layers"><span class="no">03</span>レイヤー構成</a></li><li><a href="#flows"><span class="no">04</span>処理の流れ</a></li><li><a href="#data"><span class="no">05</span>データの形</a></li><li><a href="#diagrams"><span class="no">06</span>図の種類の逆引き</a></li><li><a href="#features"><span class="no">07</span>機能の逆引き</a></li><li><a href="#crosscut"><span class="no">08</span>横断的な仕組みの場所</a></li></ol></nav>
 </div><svg class="waves" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 Q 75 0 150 30 T 300 30 T 450 30 T 600 30 T 750 30 T 900 30 T 1050 30 T 1200 30 V60 H0Z" fill="currentColor"/></svg></header>
