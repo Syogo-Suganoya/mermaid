@@ -46,6 +46,10 @@ async function addHtmlSpan(
   // object in firefox gets a width at all. The final width is fetched from the div
   fo.attr('width', `${Math.min(10 * width, maxSafeSizeForWidth)}px`);
   fo.attr('height', `${Math.min(10 * width, maxSafeSizeForWidth)}px`);
+  // The label is sized to fit its text as measured in the browser. When the SVG is rendered
+  // elsewhere (e.g. drawn onto a canvas for PNG export) glyphs can be slightly wider, for example
+  // CJK text using a different fallback font. Let the text overflow instead of clipping it.
+  fo.style('overflow', 'visible');
 
   const div = fo.append<HTMLDivElement>('xhtml:div');
   const sanitizedLabel = hasKatex(node.label)
