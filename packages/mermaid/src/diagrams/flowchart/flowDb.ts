@@ -1059,7 +1059,7 @@ You have to call mermaid.initialize.`
         labelType: vertex.labelType,
         labelStyle: '',
         parentId,
-        padding: config.flowchart?.padding || 8,
+        padding: config.flowchart?.padding ?? 8,
         cssStyles: vertex.styles,
         cssCompiledStyles: this.getCompiledStyles(['default', 'node', ...vertex.classes]),
         cssClasses: 'default ' + vertex.classes.join(' '),

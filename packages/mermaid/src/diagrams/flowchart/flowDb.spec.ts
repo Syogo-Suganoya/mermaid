@@ -1,6 +1,7 @@
 import { FlowDB } from './flowDb.js';
 import type { FlowSubGraph, FlowText } from './types.js';
 import flow from './parser/flowParser.js';
+import { setConfig } from '../../config.js';
 
 describe('flow db subgraphs', () => {
   let flowDb: FlowDB;
@@ -164,6 +165,21 @@ describe('flow db getData', () => {
     expect(edges[1].curve).toBe('monotoneX');
     expect(edges[2].curve).toBe('catmullRom');
     expect(edges[3].curve).toBe('stepBefore');
+  });
+});
+
+describe('flow db node padding (issue #7095)', () => {
+  afterEach(() => {
+    setConfig({ flowchart: { padding: 15 } });
+  });
+
+  it.each([0, 4, 30])('should use flowchart.padding = %i for the nodes', (padding) => {
+    setConfig({ flowchart: { padding } });
+    const flowDb = new FlowDB();
+    flowDb.addVertex('A', { text: 'A', type: 'text' }, undefined, [], [], '', {}, undefined);
+
+    const { nodes } = flowDb.getData();
+    expect(nodes[0].padding).toBe(padding);
   });
 });
 

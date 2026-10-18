@@ -466,9 +466,10 @@ export interface FlowchartDiagramConfig extends BaseDiagramConfig {
     | 'stepBefore'
     | 'rounded';
   /**
-   * Represents the padding between the labels and the shape
+   * Represents the padding between the labels and the shape.
    *
-   * **Only used in new experimental rendering.**
+   * Lower it (down to `0`) to make nodes more compact. Shapes that have a
+   * minimum size are not made smaller than that size.
    *
    */
   padding?: number;
