@@ -35,175 +35,138 @@ export function calculateBlockPosition(columns: number, position: number): Block
   return { px, py };
 }
 
-const getMaxChildSize = (block: Block) => {
-  let maxWidth = 0;
-  let maxHeight = 0;
-  // find max width of children
-  // log.debug('getMaxChildSize abc95 (start) parent:', block.id);
-  for (const child of block.children) {
-    const { width, height, x, y } = child.size ?? { width: 0, height: 0, x: 0, y: 0 };
-    log.debug(
-      'getMaxChildSize abc95 child:',
-      child.id,
-      'width:',
-      width,
-      'height:',
-      height,
-      'x:',
-      x,
-      'y:',
-      y,
-      child.type
-    );
-    if (child.type === 'space') {
-      continue;
+interface ChildPlacement {
+  child: Block;
+  /** The row of the grid the child is placed in. */
+  row: number;
+  /** The number of columns the child occupies, clamped to the end of its row. */
+  span: number;
+}
+
+/**
+ * Assigns the children of a block to rows of its grid.
+ *
+ * Shared by sizing and positioning so the two always agree on where a child goes. A child
+ * spanning more columns than are left in its row is clamped to the end of that row.
+ *
+ * @param block - The block whose children are placed.
+ * @returns The placement of every child, in order.
+ */
+export function placeChildren(block: Block): ChildPlacement[] {
+  const columns = block.columns ?? -1;
+  const placements: ChildPlacement[] = [];
+  let columnPos = 0;
+  for (const child of block.children ?? []) {
+    const { py } = calculateBlockPosition(columns, columnPos);
+    let span = child.widthInColumns ?? 1;
+    if (columns > 0) {
+      // Make sure overflowing lines do not affect later lines
+      span = Math.min(span, columns - (columnPos % columns));
     }
-    const normalizedWidth = width / (child.widthInColumns ?? 1);
-    if (normalizedWidth > maxWidth) {
-      maxWidth = normalizedWidth;
-    }
-    if (height > maxHeight) {
-      maxHeight = height;
-    }
+    placements.push({ child, row: py, span });
+    columnPos += span;
   }
-  return { width: maxWidth, height: maxHeight };
+  return placements;
+}
+
+/**
+ * The number of columns of a block's grid: its `columns` setting, or the number of columns its
+ * children take up in a single row when it has no setting (or more columns than children).
+ */
+const getGridColumns = (block: Block, placements: ChildPlacement[]) => {
+  const usedColumns = placements.reduce((sum, { span }) => sum + span, 0);
+  const columns = block.columns ?? -1;
+  return Math.max(1, columns > 0 ? Math.min(columns, usedColumns) : usedColumns);
 };
 
-function setBlockSizes(
-  block: Block,
-  db: BlockDB,
-  siblingWidth = 0,
-  siblingHeight = 0,
-  padding = 8
-) {
-  log.debug(
-    'setBlockSizes abc95 (start)',
-    block.id,
-    block?.size?.x,
-    'block width =',
-    block?.size,
-    'siblingWidth',
-    siblingWidth
-  );
-  if (!block?.size?.width) {
-    block.size = {
-      width: siblingWidth,
-      height: siblingHeight,
-      x: 0,
-      y: 0,
-    };
+/** The width of a child spanning `span` cells of `cellWidth`, including the gaps between them. */
+const getSpanWidth = (cellWidth: number, span: number, padding: number) =>
+  cellWidth * span + padding * (span - 1);
+
+/** The width of a cell in a grid of `columns` columns that is `width` wide. */
+const getCellWidth = (width: number, columns: number, padding: number) =>
+  (width - padding - columns * padding) / columns;
+
+/**
+ * Widens a block to `width`, spreading the extra width over the cells of its grid so that nested
+ * blocks fill the space they span.
+ */
+function setBlockWidth(block: Block, width: number, padding: number) {
+  block.size ??= { width: 0, height: 0, x: 0, y: 0 };
+  block.size.width = width;
+  if (!block.children?.length) {
+    return;
   }
-  let maxWidth = 0;
-  let maxHeight = 0;
+  const placements = placeChildren(block);
+  const cellWidth = getCellWidth(width, getGridColumns(block, placements), padding);
+  for (const { child, span } of placements) {
+    setBlockWidth(child, getSpanWidth(cellWidth, span, padding), padding);
+  }
+}
 
-  if (block.children?.length > 0) {
-    for (const child of block.children) {
-      setBlockSizes(child, db, 0, 0, padding);
-    }
-    // find max width of children
-    const childSize = getMaxChildSize(block);
-    maxWidth = childSize.width;
-    maxHeight = childSize.height;
-    log.debug('setBlockSizes abc95 maxWidth of', block.id, ':s children is ', maxWidth, maxHeight);
-
-    // set width of block to max width of children
-    for (const child of block.children) {
-      if (child.size) {
-        log.debug(
-          `abc95 Setting size of children of ${block.id} id=${child.id} ${maxWidth} ${maxHeight} ${JSON.stringify(child.size)}`
-        );
-        child.size.width =
-          maxWidth * (child.widthInColumns ?? 1) + padding * ((child.widthInColumns ?? 1) - 1);
-        child.size.height = maxHeight;
-        child.size.x = 0;
-        child.size.y = 0;
-
-        log.debug(
-          `abc95 updating size of ${block.id} children child:${child.id} maxWidth:${maxWidth} maxHeight:${maxHeight}`
-        );
-      }
-    }
-    for (const child of block.children) {
-      setBlockSizes(child, db, maxWidth, maxHeight, padding);
-    }
-
-    const columns = block.columns ?? -1;
-    let numItems = 0;
-    for (const child of block.children) {
-      numItems += child.widthInColumns ?? 1;
-    }
-
-    // The width and height in number blocks
-    let xSize = block.children.length;
-    if (columns > 0 && columns < numItems) {
-      xSize = columns;
-    }
-
-    const ySize = Math.ceil(numItems / xSize);
-
-    let width = xSize * (maxWidth + padding) + padding;
-    let height = ySize * (maxHeight + padding) + padding;
-    // If maxWidth
-    if (width < siblingWidth) {
-      log.debug(
-        `Detected to small sibling: abc95 ${block.id} siblingWidth ${siblingWidth} siblingHeight ${siblingHeight} width ${width}`
-      );
-      width = siblingWidth;
-      height = siblingHeight;
-      const childWidth = (siblingWidth - xSize * padding - padding) / xSize;
-      const childHeight = (siblingHeight - ySize * padding - padding) / ySize;
-      // cspell:ignore indata
-      log.debug('Size indata abc88', block.id, 'childWidth', childWidth, 'maxWidth', maxWidth);
-      log.debug('Size indata abc88', block.id, 'childHeight', childHeight, 'maxHeight', maxHeight);
-      log.debug('Size indata abc88 xSize', xSize, 'padding', padding);
-
-      // set width of block to max width of children
-      for (const child of block.children) {
-        if (child.size) {
-          child.size.width = childWidth;
-          child.size.height = childHeight;
-          child.size.x = 0;
-          child.size.y = 0;
-        }
-      }
-    }
-
-    log.debug(
-      `abc95 (finale calc) ${block.id} xSize ${xSize} ySize ${ySize} columns ${columns}${
-        block.children.length
-      } width=${Math.max(width, block.size?.width || 0)}`
-    );
-    if (width < (block?.size?.width || 0)) {
-      width = block?.size?.width || 0;
-
-      // Grow children to fit
-      const num = columns > 0 ? Math.min(block.children.length, columns) : block.children.length;
-      if (num > 0) {
-        const childWidth = (width - num * padding - padding) / num;
-        log.debug('abc95 (growing to fit) width', block.id, width, block.size?.width, childWidth);
-        for (const child of block.children) {
-          if (child.size) {
-            child.size.width = childWidth;
-          }
-        }
-      }
-    }
-    block.size = {
-      width,
-      height,
-      x: 0,
-      y: 0,
-    };
+/**
+ * Sizes a block from its children, bottom-up.
+ *
+ * Every column of a grid gets the same cell width: the widest child per column it spans. Each
+ * child is then widened to the cells it spans (nested blocks re-spread that width over their own
+ * cells). Each row gets the height of its tallest child, so a short row is not stretched to the
+ * height of a tall one elsewhere in the grid.
+ */
+function setBlockSizes(block: Block, db: BlockDB, padding = 8) {
+  block.size ??= { width: 0, height: 0, x: 0, y: 0 };
+  if (!block.children?.length) {
+    return;
   }
 
-  log.debug(
-    'setBlockSizes abc94 (done)',
-    block.id,
-    block?.size?.x,
-    block?.size?.width,
-    block?.size?.y,
-    block?.size?.height
-  );
+  for (const child of block.children) {
+    setBlockSizes(child, db, padding);
+  }
+
+  const placements = placeChildren(block);
+  const columns = getGridColumns(block, placements);
+
+  let cellWidth = 0;
+  for (const { child, span } of placements) {
+    if (child.type === 'space' || !child.size) {
+      continue;
+    }
+    cellWidth = Math.max(cellWidth, (child.size.width - padding * (span - 1)) / span);
+  }
+  // Keep the block at least as wide as it was measured, e.g. to fit its own label.
+  const width = Math.max(columns * (cellWidth + padding) + padding, block.size.width);
+  cellWidth = getCellWidth(width, columns, padding);
+
+  // A row holding only spaces gets the height of a regular block.
+  let blockHeight = 0;
+  const rowHeights = new Map<number, number>();
+  for (const { child, row } of placements) {
+    if (child.type === 'space' || !child.size) {
+      continue;
+    }
+    if (!child.children?.length) {
+      blockHeight = Math.max(blockHeight, child.size.height);
+    }
+    rowHeights.set(row, Math.max(rowHeights.get(row) ?? 0, child.size.height));
+  }
+
+  for (const { child, row, span } of placements) {
+    setBlockWidth(child, getSpanWidth(cellWidth, span, padding), padding);
+    const rowHeight = rowHeights.get(row) ?? blockHeight;
+    rowHeights.set(row, rowHeight);
+    child.size!.height = Math.max(child.size!.height, rowHeight);
+    if (!child.children?.length) {
+      // Plain blocks fill their row; nested blocks keep their content at the top.
+      child.size!.height = rowHeight;
+    }
+  }
+
+  let height = padding;
+  for (const rowHeight of rowHeights.values()) {
+    height += rowHeight + padding;
+  }
+
+  block.size = { width, height, x: 0, y: 0 };
+  log.debug('setBlockSizes (done)', block.id, block.size);
 }
 
 function layoutBlocks(block: Block, db: BlockDB, padding = 8) {
@@ -216,29 +179,13 @@ function layoutBlocks(block: Block, db: BlockDB, padding = 8) {
     block.children && // find max width of children
     block.children.length > 0
   ) {
-    const width = block?.children[0]?.size?.width ?? 0;
-    const widthOfChildren = block.children.length * width + (block.children.length - 1) * padding;
+    const placements = placeChildren(block);
 
-    log.debug('widthOfChildren 88', widthOfChildren, 'posX');
-
-    // Pre-compute per-row max heights so y-positioning accounts for rows of different heights
+    // Per-row max heights so y-positioning accounts for rows of different heights
     const rowHeights = new Map<number, number>();
-    {
-      let colPos = 0;
-      for (const child of block.children) {
-        if (!child.size) {
-          continue;
-        }
-        const { py } = calculateBlockPosition(columns, colPos);
-        const currentMax = rowHeights.get(py) ?? 0;
-        if (child.size.height > currentMax) {
-          rowHeights.set(py, child.size.height);
-        }
-        let filled = child?.widthInColumns ?? 1;
-        if (columns > 0) {
-          filled = Math.min(filled, columns - (colPos % columns));
-        }
-        colPos += filled;
+    for (const { child, row } of placements) {
+      if (child.size && child.size.height > (rowHeights.get(row) ?? 0)) {
+        rowHeights.set(row, child.size.height);
       }
     }
     const rowYOffsets = new Map<number, number>();
@@ -251,26 +198,23 @@ function layoutBlocks(block: Block, db: BlockDB, padding = 8) {
       }
     }
 
-    // let first = true;
-    let columnPos = 0;
     log.debug('abc91 block?.size?.x', block.id, block?.size?.x);
     let startingPosX = block?.size?.x ? block?.size?.x + (-block?.size?.width / 2 || 0) : -padding;
     let rowPos = 0;
-    for (const child of block.children) {
+    for (const { child, row: py } of placements) {
       const parent = block;
 
       if (!child.size) {
         continue;
       }
       const { width, height } = child.size;
-      const { px, py } = calculateBlockPosition(columns, columnPos);
       if (py != rowPos) {
         rowPos = py;
         startingPosX = block?.size?.x ? block?.size?.x + (-block?.size?.width / 2 || 0) : -padding;
         log.debug('New row in layout for block', block.id, ' and child ', child.id, rowPos);
       }
       log.debug(
-        `abc89 layout blocks (child) id: ${child.id} Pos: ${columnPos} (px, py) ${px},${py} (${parent?.size?.x},${parent?.size?.y}) parent: ${parent.id} width: ${width}${padding}`
+        `abc89 layout blocks (child) id: ${child.id} row: ${py} (${parent?.size?.x},${parent?.size?.y}) parent: ${parent.id} width: ${width}${padding}`
       );
       if (parent.size) {
         const halfWidth = width / 2;
@@ -307,13 +251,6 @@ function layoutBlocks(block: Block, db: BlockDB, padding = 8) {
       if (child.children) {
         layoutBlocks(child, db, padding);
       }
-      let columnsFilled = child?.widthInColumns ?? 1;
-      if (columns > 0) {
-        // Make sure overflowing lines do not affect later lines
-        columnsFilled = Math.min(columnsFilled, columns - (columnPos % columns));
-      }
-      columnPos += columnsFilled;
-      log.debug('abc88 columnsPos', child, columnPos);
     }
   }
   log.debug(
@@ -355,7 +292,7 @@ export function layout(db: BlockDB) {
   }
 
   const padding = getConfig()?.block?.padding ?? 8;
-  setBlockSizes(root, db, 0, 0, padding);
+  setBlockSizes(root, db, padding);
   layoutBlocks(root, db, padding);
   // Position blocks relative to parents
   // positionBlock(root, root, db);
