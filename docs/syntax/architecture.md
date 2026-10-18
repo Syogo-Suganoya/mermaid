@@ -408,7 +408,48 @@ architecture-beta
 
 ## Icons
 
-By default, architecture diagram supports the following icons: `cloud`, `database`, `disk`, `internet`, `server`.
+By default, architecture diagram supports the following icons: `cloud`, `database`, `disk`, `internet`, `server`, and (v\<MERMAID_RELEASE_VERSION>+) `client`, `firewall`, `gateway`, `loadbalancer`, `queue`, `router`, `wifi`. They are built into mermaid, so they also work where external icons cannot be loaded.
+
+```mermaid-example
+architecture-beta
+    group net(cloud)[Network]
+
+    service client(client)[Client]
+    service wifi(wifi)[Wi-Fi] in net
+    service router(router)[Router] in net
+    service firewall(firewall)[Firewall] in net
+    service gateway(gateway)[API Gateway] in net
+    service lb(loadbalancer)[Load Balancer] in net
+    service queue(queue)[Queue] in net
+
+    client:R -- L:wifi
+    wifi:R -- L:router
+    router:R -- L:firewall
+    firewall:R -- L:gateway
+    gateway:R -- L:lb
+    lb:R -- L:queue
+```
+
+```mermaid
+architecture-beta
+    group net(cloud)[Network]
+
+    service client(client)[Client]
+    service wifi(wifi)[Wi-Fi] in net
+    service router(router)[Router] in net
+    service firewall(firewall)[Firewall] in net
+    service gateway(gateway)[API Gateway] in net
+    service lb(loadbalancer)[Load Balancer] in net
+    service queue(queue)[Queue] in net
+
+    client:R -- L:wifi
+    wifi:R -- L:router
+    router:R -- L:firewall
+    firewall:R -- L:gateway
+    gateway:R -- L:lb
+    lb:R -- L:queue
+```
+
 Users can use any of the 200,000+ icons available in iconify.design, or add other custom icons, by [registering an icon pack](../config/icons.md).
 
 After the icons are installed, they can be used in the architecture diagram by using the format "name:icon-name", where name is the value used when registering the icon pack.
