@@ -264,21 +264,59 @@ The theming engine will only recognize hex colors and not color names. So, the v
 
 ## Sequence Diagram Variables
 
-| Variable              | Default value                  | Description                 |
-| --------------------- | ------------------------------ | --------------------------- |
-| actorBkg              | mainBkg                        | Actor Background Color      |
-| actorBorder           | primaryBorderColor             | Actor Border Color          |
-| actorTextColor        | primaryTextColor               | Actor Text Color            |
-| actorLineColor        | actorBorder                    | Actor Line Color            |
-| signalColor           | textColor                      | Signal Color                |
-| signalTextColor       | textColor                      | Signal Text Color           |
-| labelBoxBkgColor      | actorBkg                       | Label Box Background Color  |
-| labelBoxBorderColor   | actorBorder                    | Label Box Border Color      |
-| labelTextColor        | actorTextColor                 | Label Text Color            |
-| loopTextColor         | actorTextColor                 | Loop Text Color             |
-| activationBorderColor | calculated from secondaryColor | Activation Border Color     |
-| activationBkgColor    | secondaryColor                 | Activation Background Color |
-| sequenceNumberColor   | calculated from lineColor      | Sequence Number Color       |
+| Variable              | Default value                  | Description                                                                                                      |
+| --------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| actorBkg              | mainBkg                        | Actor Background Color                                                                                           |
+| actorBorder           | primaryBorderColor             | Actor Border Color                                                                                               |
+| actorTextColor        | primaryTextColor               | Actor Text Color                                                                                                 |
+| actorLineColor        | actorBorder                    | Actor Line Color                                                                                                 |
+| signalColor           | textColor                      | Signal Color                                                                                                     |
+| signalTextColor       | textColor                      | Signal Text Color                                                                                                |
+| labelBoxBkgColor      | actorBkg                       | Background of the label box in the top-left corner of a block (`loop`, `alt`, `opt`, `par`, `critical`, `break`) |
+| labelBoxBorderColor   | actorBorder                    | Border of that label box, and the dashed lines framing the block and separating its sections                     |
+| labelTextColor        | actorTextColor                 | Text in the label box: the block keyword (`loop`, `alt`, …)                                                      |
+| loopTextColor         | actorTextColor                 | Condition text of a block (e.g. `[Every minute]`) and of its `else` / `and` / `option` sections                  |
+| activationBorderColor | calculated from secondaryColor | Activation Border Color                                                                                          |
+| activationBkgColor    | secondaryColor                 | Activation Background Color                                                                                      |
+| sequenceNumberColor   | calculated from lineColor      | Sequence Number Color                                                                                            |
+
+The `label…` and `loopTextColor` variables apply to all the blocks drawn around messages (`loop`, `alt`, `opt`, `par`, `critical` and `break`), not only to `loop`. For example:
+
+```mermaid-example
+---
+config:
+  themeVariables:
+    labelBoxBkgColor: '#ffe0b2'
+    labelBoxBorderColor: '#e65100'
+    labelTextColor: '#bf360c'
+    loopTextColor: '#1565c0'
+---
+sequenceDiagram
+    Alice->>John: Hello John, how are you?
+    alt is sick
+        John->>Alice: Not so good :(
+    else is well
+        John->>Alice: Feeling fresh like a daisy
+    end
+```
+
+```mermaid
+---
+config:
+  themeVariables:
+    labelBoxBkgColor: '#ffe0b2'
+    labelBoxBorderColor: '#e65100'
+    labelTextColor: '#bf360c'
+    loopTextColor: '#1565c0'
+---
+sequenceDiagram
+    Alice->>John: Hello John, how are you?
+    alt is sick
+        John->>Alice: Not so good :(
+    else is well
+        John->>Alice: Feeling fresh like a daisy
+    end
+```
 
 ## Pie Diagram Variables
 
